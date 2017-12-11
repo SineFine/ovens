@@ -13,18 +13,8 @@
 #include <thread>
 
 #include "client.h"
+#include "macro.h"
 #include "service.h"
-
-#define WHAT(x)                                                           \
-  std::cerr << "[[ Error occure in: "                                     \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) ]]\n"                                                  \
-            << "[[ Message: " << (x) << " ]]" << std::endl;
-
-#define WHEREIS()                                                         \
-  std::cout << "{{ A am in: "                                             \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) }}\n"
 
 class Acceptor final : public std::enable_shared_from_this<Acceptor> {
  public:

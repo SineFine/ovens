@@ -17,42 +17,10 @@
 #include <unordered_map>
 
 #include "client.h"
-
-#define WHAT(x)                                                           \
-  std::cerr << "[[ Error occure in: "                                     \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) ]]\n"                                                  \
-            << "[[ Message: " << (x) << " ]]" << std::endl;
-
-#define WHEREIS()                                                         \
-  std::cout << "{{ A am in: "                                             \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) }}\n"
+#include "macro.h"
+#include "mytime.h"
 
 using namespace std::literals;
-
-//--------------------------------------------------------------------
-namespace timesync {
-static std::tm time_start = {0, 0, 0, 1, 0, 100, 0, 0, -1, 0, nullptr};
-
-inline std::string get_duration() {
-  std::time_t timepoin_start = timegm(&time_start);
-  std::time_t timepoin_now = std::time(nullptr);
-  return std::to_string(timepoin_now - timepoin_start);
-}
-
-inline std::string to_time_n(std::string sec) {
-  return std::to_string(std::stoi(sec) + timegm(&time_start));
-}
-
-inline std::string to_time_d(std::string sec) {
-  std::stringstream stream;
-  std::time_t time_end = std::stol(sec) + timegm(&time_start);
-  std::tm time_end_tm = *gmtime(&time_end);
-  stream << std::put_time(&time_end_tm, "%F %T");
-  return stream.str();
-}
-}  // namespace timesync
 
 //--------------------------------------------------------------
 class Service : public std::enable_shared_from_this<Service> {
