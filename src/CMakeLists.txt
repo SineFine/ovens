@@ -52,4 +52,4 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILE})
 
 target_link_libraries(${PROJECT_NAME} ${PTHREAD_LIB} ${BOOST_SYSTEM} ${BOOST_THREAD}
                       ${MYSQLC_LIB} ${MYSQLCPP_LIB}
-                      acceptor client service skeleton mydb time)
+                      skeleton acceptor client service  mydb time)

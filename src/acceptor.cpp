@@ -42,12 +42,12 @@ void Acceptor::initAccept() {
     _acceptor->listen(boost::asio::socket_base::max_connections);
 
   } catch (const boost::system::system_error &ex) {
-    WHAT(ex.what());
+    ERROR(ex.what());
     stopAccept();
     return;
 
   } catch (const std::exception &ex) {
-    WHAT(ex.what());
+    ERROR(ex.what());
     stopAccept();
     return;
   }
@@ -60,7 +60,7 @@ void Acceptor::startAccept() {
     try {
       auto client = std::make_shared<Client>(_ios);
       if (!client) {
-        WHAT("Unable to allocate memory.");
+        ERROR("Unable to allocate memory.");
       } else {
         _acceptor->async_accept(
             client->getSocket(),
@@ -68,10 +68,10 @@ void Acceptor::startAccept() {
                         boost::asio::placeholders::error, client));
       }
     } catch (const std::exception &ec) {
-      WHAT(ec.what());
+      ERROR(ec.what());
     }
   } else {
-    WHAT("Please initialize acceptor first");
+    MESSAGE("Please initialize acceptor first");
   }
   change_to_start();
 }
@@ -86,22 +86,22 @@ void Acceptor::stopAccept() {
     _ios.stop();
     _is_accept_init = false;
     if (ec) {
-      WHAT(ec.message());
+      ERROR(ec.message());
     }
   } else {
-    WHAT("The acceptor is already stopped. Please run it first.");
+    MESSAGE("The acceptor is already stopped. Please run it first.");
   }
 }
 
 void Acceptor::handle_accept(const boost::system::error_code &ec,
                              std::shared_ptr<Client> client) {
   if (ec) {
-    WHAT(ec.message());
+    ERROR(ec.message());
   } else {
     auto service = std::make_shared<Service>(client);
 
     if (!service) {
-      WHAT("Unable to allocate memory");
+      ERROR("Unable to allocate memory");
     } else {
       service->handleClient();
       if (!_is_stopped.load()) {

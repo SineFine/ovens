@@ -36,7 +36,7 @@ void Service::read_write_all() {
 void Service::on_read_all(const boost::system::error_code &ec, size_t) {
   if (ec == boost::asio::error::eof) {
   } else if (ec) {
-    WHAT(ec.message());
+    ERROR(ec.message());
   }
 
   write_all();
@@ -45,7 +45,7 @@ void Service::on_read_all(const boost::system::error_code &ec, size_t) {
 void Service::on_write_all(const boost::system::error_code &ec, size_t) {
   if (ec == boost::asio::error::eof) {
   } else if (ec) {
-    WHAT(ec.message());
+    ERROR(ec.message());
   }
 }
 
@@ -61,7 +61,7 @@ void Service::read_write_until() { read_until(); }
 
 void Service::on_read_until(const boost::system::error_code &ec, size_t) {
   if (ec) {
-    WHAT(ec.message());
+    ERROR(ec.message());
     return;
   } else {
     write_all();
@@ -87,7 +87,7 @@ void Service::QueryProcessor::handle() {
   try {
     _hndl[_proc_message[0]]();
   } catch (const std::exception &ec) {
-    WHAT(ec.what());
+    ERROR(ec.what());
   }
 }
 
@@ -118,23 +118,12 @@ void Service::QueryProcessor::gc() {
     tmp.push_back('\t');
     _obj._client->getSendBuffer() = tmp;
   } catch (const boost::property_tree::ptree_bad_path &ec) {
-    WHAT(ec.what());
+    ERROR(ec.what());
   } catch (const boost::property_tree::ptree_bad_data &ec) {
-    WHAT(ec.what());
+    ERROR(ec.what());
   } catch (const boost::property_tree::ptree_error &ec) {
-    WHAT(ec.what());
+    ERROR(ec.what());
   } catch (const std::exception &ec) {
-    WHAT(ec.what());
+    ERROR(ec.what());
   }
-  //    for (const auto &arg: pt){
-  //        std::cout << "[" << arg.first << "]" << std::endl;
-  //        for (const auto &arg: arg.second){
-  //            std::cout << arg.first << " = "
-  //                      << arg.second.get_value<std::string>()
-  //                      << std::endl;
-  //          }
-  //        std::cout << std::endl;
-  //      }
-  //  std::cout << pt.get<std::string>("General.2") << std::endl;
-  //  std::cout << pt.get<std::string>("Default.NotSave") << std::endl;
 }
