@@ -1,26 +1,39 @@
-#ifndef MYDEFINE_H
-#define MYDEFINE_H
+#ifndef MACRO_H
+#define MACRO_H
 
-#define ERROR(x)                                                          \
-  std::cerr << "!! Error occure in: "                                     \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) !!n"                                                   \
-            << "!! Message: " << (x) << " !!" << std::endl;
+#define ERROR(x)                                                              \
+  std::cerr                                                                   \
+      << "\n-------------------------------------------------------------\n"  \
+      << "!! Error occure in: "                                               \
+      << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ << " )\n" \
+      << "!! Message: " << (x) << "\n"                                        \
+      << "-------------------------------------------------------------"      \
+      << std::endl
 
-#define WHEREIS()                                                         \
-  std::cout << "{{ A am in: "                                             \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) }}\n"
+#define WHEREIS()                                                             \
+  std::cout                                                                   \
+      << "\n-------------------------------------------------------------\n"  \
+      << "{{ A am in: "                                                       \
+      << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ << " )\n" \
+      << "-------------------------------------------------------------"      \
+      << std::endl
 
-#define WARRNING(x)                                                       \
-  std::cerr << "[[ Warrning: "                                            \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) ]]\n"                                                  \
-            << "[[ Message: " << (x) << " ]]" << std::endl;
+#define WARRNING(x)                                                           \
+  std::cout                                                                   \
+      << "\n-------------------------------------------------------------\n"  \
+      << "[[ Warrning: "                                                      \
+      << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ << " )\n" \
+      << "[[ Message: " << (x) << "\n"                                        \
+      << "-------------------------------------------------------------"      \
+      << std::endl
 
-#define MESSAGE(x)                                                        \
-  std::cerr << "{{ Message: "                                             \
-            << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
-            << " ) }}\n"                                                  \
-            << "{{ Information: " << (x) << " }}" << std::endl;
+#define MESSAGE(x)                                                            \
+  std::cout                                                                   \
+      << "\n-------------------------------------------------------------\n"  \
+      << "{{ Message: "                                                       \
+      << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ << " )\n" \
+      << "{{ Information: " << (x) << "\n"                                    \
+      << "-------------------------------------------------------------"      \
+      << std::endl
+
 #endif

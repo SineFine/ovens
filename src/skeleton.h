@@ -20,29 +20,57 @@
 #include <memory>
 #include <sstream>
 #include <thread>
+#include <unordered_map>
 
 #include "acceptor.h"
+#include "macro.h"
 
 class Skeleton {
- public:
-  Skeleton()
-      : _ios(std::make_shared<boost::asio::io_service>()),
-        _acceptor(std::make_shared<Acceptor>(*_ios)) {}
+  using handler = std::unordered_map<std::string, std::function<void()>>;
 
  public:
-  void run();
-  void stop();
+  Skeleton();
+
+  Skeleton(const Skeleton &) = delete;
+  Skeleton &operator=(const Skeleton &) = delete;
+  Skeleton(Skeleton &&) = delete;
+  Skeleton &operator=(Skeleton &&) = delete;
+
+  friend std::istream &operator>>(std::istream &, Skeleton &);
+  friend std::ostream &operator<<(std::ostream &, Skeleton &);
+  inline operator bool() { return _is_stop; }
+
+ public:
+  void runServer();
+  void stopServer();
+
+  void runReadBuffer(const std::string & = "debug"s);
+  void stopReadBuffer();
 
  private:
-  void write_mysql();
+  void write_to_mysql();
+  void write_to_stdout();
 
-  inline void stopReadBuffer() { _stop = true; }
+  inline void set_stop_read_buffer() { _stop_read_buff = true; }
+  inline void set_run_read_buffer() { _stop_read_buff = false; }
+
+ private:
+  void quit() { _is_stop = true; }
+  void debug();
+  void job();
+  void restart();
 
  private:
   std::shared_ptr<boost::asio::io_service> _ios;
   std::shared_ptr<Acceptor> _acceptor;
   boost::thread_group _thread_pool;
-  std::atomic_bool _stop{false};
+  std::thread *_thread_buff{nullptr};
+  handler _hndl;
+
+  std::vector<std::string> _hndl_name{"debug"s, "job"s, "restart"s, "quit"s};
+  std::atomic_bool _stop_read_buff{false};
+  bool _is_stop{false};
+  std::string _what_is_he_doing{"none"s};
 };
 
 #endif
