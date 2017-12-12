@@ -115,6 +115,7 @@ void Skeleton::write_to_stdout() {
   std::string tmpstr;
   while (!_stop_read_buff) {
     if (!stack.empty()) {
+      std::cout << "\n";
       while (stack.pop(tmpstr)) {
         std::cout << tmpstr << std::endl;
       }
@@ -130,9 +131,11 @@ void Skeleton::debug() {
       _thread_buff->join();
       set_run_read_buffer();
       delete _thread_buff;
-      _thread_buff = new std::thread(std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_stdout, this));
     } else {
-      _thread_buff = new std::thread(std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_stdout, this));
     }
     _what_is_he_doing = _hndl_name[0];
   } catch (const std::exception &ec) {
@@ -146,10 +149,12 @@ void Skeleton::job() {
       set_stop_read_buffer();
       _thread_buff->join();
       set_run_read_buffer();
-      delete  _thread_buff;
-      _thread_buff = new std::thread (std::bind(&Skeleton::write_to_stdout, this));
+      delete _thread_buff;
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_mysql, this));
     } else {
-      _thread_buff = new std::thread (std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_mysql, this));
     }
     _what_is_he_doing = _hndl_name[1];
   } catch (const std::exception &ec) {
