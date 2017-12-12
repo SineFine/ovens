@@ -1,8 +1,6 @@
 #include "skeleton.h"
 
 void Skeleton::run() {
-  std::cout << "START SERVER" << std::endl;
-
   unsigned core = std::thread::hardware_concurrency();
   core = core ? core - 1 : 2u;
 
@@ -14,10 +12,10 @@ void Skeleton::run() {
       _ios->run(ec);
       try {
         if (ec) {
-          WHAT(ec.message());
+          ERROR(ec.message());
         }
       } catch (const std::exception &ec) {
-        WHAT(ec.what());
+        ERROR(ec.what());
       }
     });
   }
@@ -36,10 +34,9 @@ void Skeleton::write_mysql() {
         driver->connect("tcp://127.0.0.1:3306", "ovens", "oven"));
 
     if (con->isValid()) {
-      std::cout << "Conection to the mysql server wass succesfull."
-                << std::endl;
+      MESSAGE("Conection to the mysql server wass successfull.");
     } else {
-      std::cout << "Conection to the mysql server filed!!! " << std::endl;
+      ERROR("Conection to the mysql server filed! ");
       return;
     }
 
@@ -72,13 +69,9 @@ void Skeleton::write_mysql() {
     driver->threadEnd();
 
   } catch (const sql::SQLException &ec) {
-    std::cout << "# ERR: SQLException in " << __FILE__;
-    std::cout << "(" << __FUNCTION__ << ") on line " << __LINE__ << std::endl;
-    std::cout << "# ERR: " << ec.what();
-    std::cout << " (MySQL error code: " << ec.getErrorCode();
-    std::cout << ", SQLState: " << ec.getSQLState() << " )" << std::endl;
+    ERROR(ec.getSQLStateCStr());
   } catch (const std::exception &ec) {
-    std::cout << ec.what() << std::endl;
+    ERROR(ec.what());
   }
 }
 

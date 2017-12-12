@@ -1,7 +1,7 @@
 #ifndef MYDEFINE_H
 #define MYDEFINE_H
 
-#define WHAT(x)                                                           \
+#define ERROR(x)                                                          \
   std::cerr << "!! Error occure in: "                                     \
             << "function( " << __FUNCTION__ << " ) \\ line( " << __LINE__ \
             << " ) !!n"                                                   \
