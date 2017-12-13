@@ -38,7 +38,7 @@ class Skeleton {
 
   friend std::istream &operator>>(std::istream &, Skeleton &);
   friend std::ostream &operator<<(std::ostream &, Skeleton &);
-  inline operator bool() { return _is_stop; }
+  explicit operator bool() { return _is_stop; }
 
  public:
   void runServer();
@@ -55,15 +55,20 @@ class Skeleton {
   inline void set_run_read_buffer() { _stop_read_buff = false; }
 
  private:
+  void create_io_threade();
+
+ private:
   void quit() { _is_stop = true; }
   void debug();
   void job();
   void restart();
 
  private:
-  std::shared_ptr<boost::asio::io_service> _ios;
+  std::unique_ptr<boost::asio::io_service> _ios;
+  std::unique_ptr<boost::asio::io_service::work> _work;
   std::shared_ptr<Acceptor> _acceptor;
-  boost::thread_group _thread_pool;
+  std::unique_ptr<boost::thread_group> _thread_pool;
+
   std::thread *_thread_buff{nullptr};
   handler _hndl;
 

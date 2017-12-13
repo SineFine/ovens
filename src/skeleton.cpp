@@ -2,8 +2,10 @@
 
 //-----------------------------------------------------------------------
 Skeleton::Skeleton()
-    : _ios(std::make_shared<boost::asio::io_service>()),
-      _acceptor(std::make_shared<Acceptor>(*_ios)) {
+    : _ios(std::make_unique<boost::asio::io_service>()),
+      _work(std::make_unique<boost::asio::io_service::work>(*_ios)),
+      _acceptor(std::make_shared<Acceptor>(*_ios)),
+      _thread_pool(std::make_unique<boost::thread_group>()) {
   _hndl[_hndl_name[0]] = std::bind(&Skeleton::debug, this);
   _hndl[_hndl_name[1]] = std::bind(&Skeleton::job, this);
   _hndl[_hndl_name[2]] = std::bind(&Skeleton::restart, this);
@@ -11,30 +13,16 @@ Skeleton::Skeleton()
 }
 //-----------------------------------------------------------------------
 void Skeleton::runServer() {
-  unsigned core = std::thread::hardware_concurrency();
-  core = core ? core - 1 : 2u;
-
-  _acceptor->initAccept();
-
-  for (unsigned i = 0; i < core; ++i) {
-    _thread_pool.create_thread([this] {
-      boost::system::error_code ec;
-      _ios->run(ec);
-      try {
-        if (ec) {
-          ERROR(ec.message());
-        }
-      } catch (const std::exception &ec) {
-        ERROR(ec.what());
-      }
-    });
+  if (_acceptor->initAccept()) {
+    create_io_threade();
+    _acceptor->startAccept();
   }
-  _acceptor->startAccept();
 }
 //-----------------------------------------------------------------------
 void Skeleton::stopServer() {
   _acceptor->stopAccept();
-  _thread_pool.join_all();
+  _ios->stop();
+  _thread_pool->join_all();
 }
 //-----------------------------------------------------------------------
 void Skeleton::runReadBuffer(const std::string &work) {
@@ -46,7 +34,6 @@ void Skeleton::runReadBuffer(const std::string &work) {
   }
 }
 //-----------------------------------------------------------------------
-
 void Skeleton::stopReadBuffer() {
   if (_thread_buff) {
     set_stop_read_buffer();
@@ -58,13 +45,10 @@ void Skeleton::stopReadBuffer() {
     WARRNING("Reading from the buffer is not started.");
   }
 }
-
 //-----------------------------------------------------------------------
 void Skeleton::write_to_mysql() {
   try {
-    sql::mysql::MySQL_Driver *driver;
-    driver = sql::mysql::get_mysql_driver_instance();
-
+    auto driver = sql::mysql::get_mysql_driver_instance();
     auto con = std::unique_ptr<sql::Connection>(
         driver->connect("tcp://127.0.0.1:3306", "ovens", "oven"));
 
@@ -76,9 +60,8 @@ void Skeleton::write_to_mysql() {
     }
 
     auto &stack = Service::getStack();
-    std::string tmpstr;
-    std::string id, ymd, hms;
-    int second = 0;
+    auto tmpstr{""s}, id{""s}, ymd{""s}, hms{""s};
+    auto second{0};
     boost::format format("INSERT INTO ovens.%1%(second, date) VALUES (?, ?)");
     auto prep_stmt =
         std::unique_ptr<sql::PreparedStatement>(con->prepareStatement(
@@ -115,6 +98,7 @@ void Skeleton::write_to_stdout() {
   std::string tmpstr;
   while (!_stop_read_buff) {
     if (!stack.empty()) {
+      std::cout << "\n";
       while (stack.pop(tmpstr)) {
         std::cout << tmpstr << std::endl;
       }
@@ -130,9 +114,11 @@ void Skeleton::debug() {
       _thread_buff->join();
       set_run_read_buffer();
       delete _thread_buff;
-      _thread_buff = new std::thread(std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_stdout, this));
     } else {
-      _thread_buff = new std::thread(std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_stdout, this));
     }
     _what_is_he_doing = _hndl_name[0];
   } catch (const std::exception &ec) {
@@ -146,10 +132,12 @@ void Skeleton::job() {
       set_stop_read_buffer();
       _thread_buff->join();
       set_run_read_buffer();
-      delete  _thread_buff;
-      _thread_buff = new std::thread (std::bind(&Skeleton::write_to_stdout, this));
+      delete _thread_buff;
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_mysql, this));
     } else {
-      _thread_buff = new std::thread (std::bind(&Skeleton::write_to_stdout, this));
+      _thread_buff =
+          new std::thread(std::bind(&Skeleton::write_to_mysql, this));
     }
     _what_is_he_doing = _hndl_name[1];
   } catch (const std::exception &ec) {
@@ -157,7 +145,40 @@ void Skeleton::job() {
   }
 }
 //-----------------------------------------------------------------------
-void Skeleton::restart() {}
+void Skeleton::restart() {
+  stopServer();
+
+  _ios.reset(new boost::asio::io_service);
+  _work.reset(new boost::asio::io_service::work(*_ios));
+  _thread_pool.reset(new boost::thread_group);
+  _acceptor = std::make_shared<Acceptor>(*_ios);
+
+  while (!_acceptor->initAccept()) {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+  }
+
+  create_io_threade();
+  _acceptor->startAccept();
+}
+//-----------------------------------------------------------------------
+void Skeleton::create_io_threade() {
+  unsigned core = std::thread::hardware_concurrency();
+  core = core ? core - 1 : 2u;
+
+  for (unsigned i = 0; i < core; ++i) {
+    _thread_pool->create_thread([this] {
+      boost::system::error_code ec;
+      _ios->run(ec);
+      try {
+        if (ec) {
+          ERROR(ec.message());
+        }
+      } catch (const std::exception &ec) {
+        ERROR(ec.what());
+      }
+    });
+  }
+}
 //-----------------------------------------------------------------------
 std::istream &operator>>(std::istream &is, Skeleton &obj) {
   std::string istring;

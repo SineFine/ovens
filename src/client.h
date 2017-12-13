@@ -2,6 +2,9 @@
 #define CLIENT_H
 
 #include <boost/asio.hpp>
+#include <string>
+
+using namespace std::literals;
 
 class Client final {
  public:
@@ -19,13 +22,9 @@ class Client final {
 
  public:
   inline recv_buffer& getRecvBuffer() { return _recv_buffer; }
-
   inline boost::asio::streambuf& getRecvStreamBuffer() { return _recv_sbuffer; }
-
   inline send_buffer& getSendBuffer() { return _send_buff; }
-
   inline tcp_socket& getSocket() { return _client; }
-
   inline const std::string& getDelim() { return _delim; }
 
  private:
@@ -33,7 +32,7 @@ class Client final {
   recv_buffer _recv_buffer;
   send_buffer _send_buff;
   boost::asio::streambuf _recv_sbuffer;
-  const std::string _delim = "\r";
+  const std::string _delim {"\r"s};
 };
 
 #endif

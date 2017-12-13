@@ -1,41 +1,44 @@
 #include "acceptor.h"
-
+//-------------------------------------------------------------------------
 Acceptor::Acceptor(boost::asio::io_service &ios, const std::string &ip,
                    unsigned short port)
     : _ios(ios),
       _acceptor(new boost::asio::ip::tcp::acceptor(_ios)),
       _endpoint(new boost::asio::ip::tcp::endpoint),
-      _is_stopped(true),
       _port_def(port),
-      _ip_def(std::move(ip)) {}
-
-void Acceptor::initAccept() {
+      _ip_def(ip) {}
+//-------------------------------------------------------------------------
+bool Acceptor::initAccept() {
   try {
-    _work.reset(new boost::asio::io_service::work(_ios));
-    std::string host = boost::asio::ip::host_name();
+    auto ip_wrong{"0.0.0.0"s};
+    auto host = boost::asio::ip::host_name();
 
-    boost::asio::ip::tcp::resolver resolver(_ios);
-    boost::asio::ip::tcp::resolver::query query(host,
-                                                std::to_string(_port_def));
+    if (_ip_def.compare(ip_wrong) == 0) {
+      boost::asio::ip::tcp::resolver resolver(_ios);
+      boost::asio::ip::tcp::resolver::query query(host,
+                                                  std::to_string(_port_def));
+      boost::asio::ip::tcp::resolver::iterator destination =
+          resolver.resolve(query);
+      boost::asio::ip::tcp::resolver::iterator end;
 
-    boost::asio::ip::tcp::resolver::iterator destination =
-        resolver.resolve(query);
-    boost::asio::ip::tcp::resolver::iterator end;
-
-    for (; destination != end; ++destination) {
-      if (!(*destination).endpoint().address().is_v4()) {
-        continue;
-      } else {
-        *_endpoint = *destination;
-        break;
+      for (; destination != end; ++destination) {
+        if (!(*destination).endpoint().address().is_v4()) {
+          continue;
+        } else {
+          *_endpoint = *destination;
+          break;
+        }
       }
-    }
 
-    if (!_endpoint->address().to_string().compare("0.0.0.0")) {
-      throw boost::system::system_error(boost::system::errc::make_error_code(
-          boost::system::errc::bad_address));
+      if (!_endpoint->address().to_string().compare(ip_wrong)) {
+        throw boost::system::system_error(boost::system::errc::make_error_code(
+            boost::system::errc::bad_address));
+      }
+    } else {
+      _endpoint->address(boost::asio::ip::address(
+          boost::asio::ip::address::from_string(_ip_def)));
+      _endpoint->port(_port_def);
     }
-
     _acceptor->open(_endpoint->protocol());
     _acceptor->set_option(boost::asio::ip::tcp::acceptor::reuse_address(false));
     _acceptor->bind(*_endpoint);
@@ -44,18 +47,19 @@ void Acceptor::initAccept() {
   } catch (const boost::system::system_error &ex) {
     ERROR(ex.what());
     stopAccept();
-    return;
+    return _is_accept_init;
 
   } catch (const std::exception &ex) {
     ERROR(ex.what());
     stopAccept();
-    return;
+    return _is_accept_init;
   }
-
   accept_init_succ();
-}
 
-void Acceptor::startAccept() {
+  return _is_accept_init;
+}
+//-------------------------------------------------------------------------
+bool Acceptor::startAccept() {
   if (_is_accept_init) {
     try {
       auto client = std::make_shared<Client>(_ios);
@@ -69,30 +73,26 @@ void Acceptor::startAccept() {
       }
     } catch (const std::exception &ec) {
       ERROR(ec.what());
+      return _is_accept_start;
     }
   } else {
     MESSAGE("Please initialize acceptor first");
+    return _is_accept_start;
   }
   change_to_start();
+  return _is_accept_start;
 }
-
+//-------------------------------------------------------------------------
 void Acceptor::stopAccept() {
   boost::system::error_code ec;
-
-  if (!_is_stopped.load()) {
-    change_to_stop();
-    _acceptor->close(ec);
-    _work.reset();
-    _ios.stop();
-    _is_accept_init = false;
-    if (ec) {
-      ERROR(ec.message());
-    }
-  } else {
-    MESSAGE("The acceptor is already stopped. Please run it first.");
+  change_to_stop();
+  _acceptor->close(ec);
+  _is_accept_init = false;
+  if (ec) {
+    ERROR(ec.message());
   }
 }
-
+//-------------------------------------------------------------------------
 void Acceptor::handle_accept(const boost::system::error_code &ec,
                              std::shared_ptr<Client> client) {
   if (ec) {
@@ -104,7 +104,7 @@ void Acceptor::handle_accept(const boost::system::error_code &ec,
       ERROR("Unable to allocate memory");
     } else {
       service->handleClient();
-      if (!_is_stopped.load()) {
+      if (_is_accept_start) {
         startAccept();
       }
     }

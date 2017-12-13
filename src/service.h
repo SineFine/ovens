@@ -22,7 +22,6 @@
 
 using namespace std::literals;
 
-//--------------------------------------------------------------
 class Service : public std::enable_shared_from_this<Service> {
  private:
   class QueryProcessor {
@@ -67,15 +66,10 @@ class Service : public std::enable_shared_from_this<Service> {
   }
 
  private:
-  void read_all();
-  void write_all();
-  void read_write_all();
-  void on_read_all(const boost::system::error_code &, size_t);
-  void on_write_all(const boost::system::error_code &, size_t);
-  //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   void read_until();
-  void read_write_until();
   void on_read_until(const boost::system::error_code &, size_t);
+  void write_all();
+  void on_write_all(const boost::system::error_code &, size_t);
 
  private:
   std::shared_ptr<Client> _client;
@@ -84,6 +78,5 @@ class Service : public std::enable_shared_from_this<Service> {
  private:
   static boost::lockfree::stack<std::string> _stack;
 };
-//---------------------------------------------------------------
 
 #endif

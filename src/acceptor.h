@@ -18,7 +18,7 @@
 
 class Acceptor final : public std::enable_shared_from_this<Acceptor> {
  public:
-  Acceptor(boost::asio::io_service &ios, const std::string &ip = "192.168.0.69",
+  Acceptor(boost::asio::io_service &ios, const std::string &ip = "0.0.0.0",
            unsigned short port = 4444);
 
   Acceptor(const Acceptor &obj) = delete;
@@ -27,32 +27,29 @@ class Acceptor final : public std::enable_shared_from_this<Acceptor> {
   Acceptor &operator=(Acceptor &&obj) = delete;
 
  public:
-  void initAccept();
-  void startAccept();
+  bool initAccept();
+  bool startAccept();
   void stopAccept();
 
-  inline bool getStatus() { return _is_stopped.load(); }
+  inline bool getStatus() { return _is_accept_start.load(); }
 
  private:
   void handle_accept(const boost::system::error_code &,
                      std::shared_ptr<Client>);
 
   inline void accept_init_succ() { _is_accept_init = true; }
-
-  //-------------------------------------------------------
-  inline void change_to_stop() { _is_stopped.store(true); }
-
-  inline void change_to_start() { _is_stopped.store(false); }
+  inline void change_to_stop() { _is_accept_start.store(false); }
+  inline void change_to_start() { _is_accept_start.store(true); }
 
  private:
   boost::asio::io_service &_ios;
-  std::unique_ptr<boost::asio::io_service::work> _work;
   std::unique_ptr<boost::asio::ip::tcp::acceptor> _acceptor;
   std::unique_ptr<boost::asio::ip::tcp::endpoint> _endpoint;
-  std::atomic<bool> _is_stopped;
+
+  std::atomic<bool> _is_accept_start{false};
   bool _is_accept_init{false};
-  unsigned int _port_def;
-  std::string _ip_def;
+  unsigned short _port_def{0};
+  std::string _ip_def{""s};
 };
 
 #endif
