@@ -53,9 +53,9 @@ void Skeleton::write_to_mysql() {
         driver->connect("tcp://127.0.0.1:3306", "ovens", "oven"));
 
     if (con->isValid()) {
-      MESSAGE("Conection to the mysql server wass successfully.");
+      MESSAGE("Conection to the mysql server wass successfull.");
     } else {
-      ERROR("Conection to the mysql server filed!");
+      ERROR("Conection to the mysql server filed! ");
       return;
     }
 
@@ -87,7 +87,7 @@ void Skeleton::write_to_mysql() {
     driver->threadEnd();
 
   } catch (const sql::SQLException &ec) {
-    ERROR(ec.what());
+    ERROR(ec.getSQLStateCStr());
   } catch (const std::exception &ec) {
     ERROR(ec.what());
   }
