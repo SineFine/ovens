@@ -64,9 +64,12 @@ void Service::QueryProcessor::gt() {
 }
 //-------------------------------------------------------
 void Service::QueryProcessor::sd() {
-  std::string date = timesync::to_time_d(_proc_message[2]);
-  std::string tmp = _proc_message[1] + " " +
-                    std::to_string(std::stoi(_proc_message[2])) + " " + date;
+  _proc_message.push_back(timesync::to_time_d(_proc_message[2]));
+  std::string tmp;
+  std::stringstream sstream;
+  std::for_each(++_proc_message.begin(), _proc_message.end(),
+                [&sstream](const auto &arg) { sstream << arg << " "s; });
+  std::getline(sstream, tmp);
   _obj._stack.push(tmp);
   _obj._client->getSendBuffer() = timesync::get_duration();
 }

@@ -1,11 +1,15 @@
 #include "skeleton.h"
-
 //-----------------------------------------------------------------------
-Skeleton::Skeleton()
-    : _ios(std::make_unique<boost::asio::io_service>()),
+Skeleton::Skeleton(const control_properties &cp)
+    : _ip(cp._ip),
+      _port(cp._port),
+      _mysql_loggin(cp._mysql_loggin),
+      _mysql_passwd(cp._mysql_passwd),
+      _ios(std::make_unique<boost::asio::io_service>()),
       _work(std::make_unique<boost::asio::io_service::work>(*_ios)),
-      _acceptor(std::make_shared<Acceptor>(*_ios)),
-      _thread_pool(std::make_unique<boost::thread_group>()) {
+      _acceptor(std::make_shared<Acceptor>(*_ios, _ip, _port)),
+      _thread_pool(std::make_unique<boost::thread_group>())
+{
   _hndl[_hndl_name[0]] = std::bind(&Skeleton::debug, this);
   _hndl[_hndl_name[1]] = std::bind(&Skeleton::job, this);
   _hndl[_hndl_name[2]] = std::bind(&Skeleton::restart, this);
@@ -50,7 +54,7 @@ void Skeleton::write_to_mysql() {
   try {
     auto driver = sql::mysql::get_mysql_driver_instance();
     auto con = std::unique_ptr<sql::Connection>(
-        driver->connect("tcp://127.0.0.1:3306", "ovens", "oven"));
+        driver->connect("tcp://127.0.0.1:3306", _mysql_loggin, _mysql_passwd));
 
     if (con->isValid()) {
       MESSAGE("Conection to the mysql server wass successfull.");
@@ -80,7 +84,7 @@ void Skeleton::write_to_mysql() {
           prep_stmt->execute();
         }
       }
-      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::this_thread::sleep_for(3s);
     }
 
     con->close();
@@ -103,7 +107,7 @@ void Skeleton::write_to_stdout() {
         std::cout << tmpstr << std::endl;
       }
     }
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(2s);
   }
 }
 //-----------------------------------------------------------------------
@@ -151,10 +155,10 @@ void Skeleton::restart() {
   _ios.reset(new boost::asio::io_service);
   _work.reset(new boost::asio::io_service::work(*_ios));
   _thread_pool.reset(new boost::thread_group);
-  _acceptor = std::make_shared<Acceptor>(*_ios);
+  _acceptor = std::make_shared<Acceptor>(*_ios, _ip, _port);
 
   while (!_acceptor->initAccept()) {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(2s);
   }
 
   create_io_threade();

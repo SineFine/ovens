@@ -25,11 +25,42 @@
 #include "acceptor.h"
 #include "macro.h"
 
+class Skeleton;
+
+class control_properties
+{
+  std::string _ip{};
+  unsigned short _port{};
+  std::string _mysql_loggin{};
+  std::string _mysql_passwd{};
+
+  friend Skeleton;
+
+public:
+  control_properties& ip(const std::string &ip){
+    _ip = std::move(ip); return *this;
+  }
+
+  control_properties& port(const unsigned short &port){
+    _port = port; return *this;
+  }
+
+  control_properties& mysql_login(const std::string login){
+    _mysql_loggin = std::move(login); return *this;
+  }
+
+  control_properties& mysql_passwd(const std::string passwd){
+    _mysql_passwd = std::move(passwd); return *this;
+  }
+
+};
+
 class Skeleton {
   using handler = std::unordered_map<std::string, std::function<void()>>;
 
  public:
   Skeleton();
+  Skeleton(const control_properties &cp);
 
   Skeleton(const Skeleton &) = delete;
   Skeleton &operator=(const Skeleton &) = delete;
@@ -64,6 +95,11 @@ class Skeleton {
   void restart();
 
  private:
+  std::string _ip{};
+  unsigned short _port{};
+  std::string _mysql_loggin{};
+  std::string _mysql_passwd{};
+
   std::unique_ptr<boost::asio::io_service> _ios;
   std::unique_ptr<boost::asio::io_service::work> _work;
   std::shared_ptr<Acceptor> _acceptor;
@@ -76,6 +112,7 @@ class Skeleton {
   std::atomic_bool _stop_read_buff{false};
   bool _is_stop{false};
   std::string _what_is_he_doing{"none"s};
+
 };
 
 #endif

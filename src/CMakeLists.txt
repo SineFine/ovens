@@ -42,7 +42,7 @@ add_library(service STATIC service.cpp service.h)
 add_library(acceptor STATIC acceptor.cpp acceptor.h)
 add_library(client STATIC client.cpp client.h)
 add_library(skeleton STATIC skeleton.cpp skeleton.h)
-add_library(mydb STATIC mydb.cpp mydb.h)
+#add_library(mydb STATIC mydb.cpp mydb.h)
 add_library(time mytime.h mytime.cpp)
 
 include_directories()
@@ -52,4 +52,4 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILE})
 
 target_link_libraries(${PROJECT_NAME} ${PTHREAD_LIB} ${BOOST_SYSTEM} ${BOOST_THREAD}
                       ${MYSQLC_LIB} ${MYSQLCPP_LIB}
-                      skeleton acceptor client service  mydb time)
+                      skeleton acceptor client service time)

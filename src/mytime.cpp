@@ -16,7 +16,7 @@ std::string to_time_n(const std::string &sec) {
 std::string to_time_d(const std::string &sec) {
   std::stringstream stream;
   std::time_t time_end = std::stol(sec) + timegm(&time_start);
-  std::tm time_end_tm = *gmtime(&time_end);
+  std::tm time_end_tm = *std::localtime(&time_end);
   stream << std::put_time(&time_end_tm, "%F %T");
   return stream.str();
 }
